@@ -172,7 +172,11 @@ if ( ! class_exists( 'WP_Background_Process' ) ) {
 				wp_die();
 			}
 
-			check_ajax_referer( $this->identifier, 'nonce' );
+			$bypass = apply_filters('wpbp_bypass_verification', false );
+
+			if( ! $bypass ){
+				check_ajax_referer( $this->identifier, 'nonce' );
+			}
 
 			$this->handle();
 
@@ -456,7 +460,7 @@ if ( ! class_exists( 'WP_Background_Process' ) ) {
 		 */
 		protected function schedule_event() {
 			if ( ! wp_next_scheduled( $this->cron_hook_identifier ) ) {
-				wp_schedule_event( time(), $this->cron_interval_identifier, $this->cron_hook_identifier );
+				wp_schedule_event( time() + apply_filters( $this->identifier . '_cron_init_offset', 10 ), $this->cron_interval_identifier, $this->cron_hook_identifier );
 			}
 		}
 
@@ -475,7 +479,6 @@ if ( ! class_exists( 'WP_Background_Process' ) ) {
 		 * Cancel Process
 		 *
 		 * Stop processing queue items, clear cronjob and delete batch.
-		 *
 		 */
 		public function cancel_process() {
 			if ( ! $this->is_queue_empty() ) {
